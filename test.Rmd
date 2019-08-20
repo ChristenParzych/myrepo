@@ -1,0 +1,39 @@
+---
+title: "Untitled"
+author: "Christen Parzych"
+date: "8/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Christen Parzych Assignment 1 
+
+
+``` {r}
+## 1. A sentence that says, "Hello, World!"
+print("Hello, World!")
+```
+
+```{r load_data}
+## 2. R output that summarizes the variables in the college.Rdata dataset
+
+load("college.Rdata")
+
+summary(sc)
+```
+
+```{r}
+##Calculate the average earnings for individuals at the most selective colleges, then compare that with individuals at the least selective colleges in the dataset.
+
+library(tidyverse)
+sc%>%filter(adm_rate<.1)%>%summarize(mean_earnings=mean(md_earn_wne_p6,na.rm=TRUE))
+
+sc%>%filter(adm_rate>.3)%>%summarize(mean_earnings=mean(md_earn_wne_p6,na.rm=TRUE))
+
+##Average earnings for individuals at the most selective colleges is $53,500, while the average earning sfor individuals at the least selective colleges is $34,747.14. I am testing this change.
+```
+
+
