@@ -1,0 +1,247 @@
+---
+title: "Problem Set 1"
+author: "Christen Parzych"
+date: "8/20/2019"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r scorecard} 
+## Clear environment
+rm(list=ls())
+## Get necessary libraries-- won't work the first time, because you need to install them!
+library(tidyverse)
+
+```
+
+
+
+Please note that I included all work; Questions 3 and 4 were initially attempted prior to Week 2's async. I felt that the original approaches were valuable learning experiences, and I elected to keep them for my own notes. Final answers are located last for each. 
+
+## 1. Write a sentence that says, "Hello, World!"
+``` {r}
+## 1. A sentence that says, "Hello, World!"
+print("Hello, World!")
+```
+Please see above code to view my "Hello, World!" output. 
+
+## 2. Load R output that summarizes the variables in the college.Rdata dataset.
+```{r load_data}
+## 2. R output that summarizes the variables in the college.Rdata dataset
+
+library(tidyverse)
+
+load("college.Rdata")
+
+summary(sc)
+```
+
+I chose to use the 'summary' feature to display the summary output of the college file. I used the same explanations as in the async and added one additional for 'udgd,' based on my assumption of its meaning. 
+
+The dataset ("college.Rdata") above includes the following variables:
+
+*Variable Name* :*Definition*
+unitid: Unit ID
+
+instnm: Institution Name
+
+stabbr: State Abbreviation
+
+year: Year
+
+control: control of institution, 1=public, 2= private non-profit, 3=private for-profit
+
+preddeg: predominant degree, 1= certificate, 2= associates, 3= bachelor's, 4=graduate
+
+adm_rate: Proportion of Applicants Admitted
+
+sat_avg: Midpoint of entrance exam scores, on SAT scale, math and verbal only
+
+costt_4a: Average cost of attendance (tuition and room and board less all grant aid)
+
+debt_mdn: Median debt of graduates
+
+md_earn_ne_pg: Earnings of graduates who are not enrolled in higher education, six years after graduation
+
+New** ugds: number of undergrads (assumed)
+
+
+
+## Question 1: Calculate the average earnings for individuals at the most selective colleges, then compare that with individuals at the least selective colleges in the dataset.
+
+```{r}
+##Calculate the average earnings for individuals at the most selective colleges, then compare that with individuals at the least selective colleges in the dataset.
+
+library(tidyverse)
+sc%>%filter(adm_rate<.1)%>%summarize(mean_earnings=mean(md_earn_wne_p6,na.rm=TRUE))
+
+sc%>%filter(adm_rate>.3)%>%summarize(mean_earnings=mean(md_earn_wne_p6,na.rm=TRUE))
+
+
+```
+
+Average earnings for individuals at the most selective colleges is $53,500, while the average earnings for individuals at the least selective colleges is $34,747.14. I used admission rate and average earnings as variables to describe the selectivity of the institution and average earnings, respectively. 
+
+
+## Question 2: Find a way to determine whether colleges with very high SAT scores tend to be larger or smaller than colleges with low SAT scores.
+
+```{r}
+##Find a way to determine whether colleges with very high SAT scores tend to be larger or smaller than colleges with low SAT scores.
+
+library(tidyverse)
+
+sc%>%filter(sat_avg<900)%>%select(instnm,ugds)%>%
+  arrange(-ugds)
+
+sc%>%filter(sat_avg>1400)%>%select(instnm,ugds)%>%
+  arrange(-ugds)
+
+```
+
+I chose to filter based on SAT scores and sorted the data based on the number of undergrads as a proxy for institution size (I added 'udgd' to the key). Based on the filters above, it appears colleges that require higher SAT scores tend to be larger than colleges with low SAT scores. California Institute of Technology has high SAT scores and a low undergrad population, but it is also a highly specialized school. Cal State San Bernadino has a large undergrad population and lower SAT scores, but it is a large state school. 
+
+
+## Question 3: Plot the relationship between cost and debt. What do you see? Does this surprise you?
+
+```{r}
+##Plot the relationship between cost and debt. What do you see? Does this surprise you?
+
+plot(sc$costt4_a, sc$debt_mdn,main="Scatterplot of Cost and Median Debt", xlab="Cost", ylab="Median Debt", pch=19)
+```
+
+I chose to use a scatterplot. The code was from our stats class. 
+After viewing Week 2's async, I decided to also try using the new 'gg' technique:
+```{r}
+library(plotly)
+library(Metrics)
+
+
+gg<-ggplot(data=sc, aes(y=debt_mdn,x=costt4_a,text=instnm))
+gg<-gg+geom_point(alpha=.5,size=.5)
+gg<-gg+geom_point(aes(y=debt_mdn,x=costt4_a,
+                  color="Name"),
+                  size=.5)
+gg<-gg+xlab("Cost")+ylab("Median Debt")
+
+gg
+gg4 <-gg
+```
+
+There seems to be a correlation between cost and debt (as cost increases, so too does debt) unti you get to the most expensive schools, where there is also data indicating that students who attend the most expensive schools don't necessarily have the most debt. It does not surprise me; many expensive schools (like Vanderbilt) have higher endowments and more robust financial aid programs to offset the high cost. That being said, there are of course a large number of students who pay a high cost and incur high debt.  
+
+## Question 4: Provide separate plots for cost and debt by control of the institution.
+
+
+```{r bar plot, echo=FALSE}
+##Provide separate plots for cost and debt by control of the institution.
+
+library(tidyverse)
+
+load("college.Rdata")
+
+
+sc
+
+
+
+
+table1 <-table(sc$costt4_a,sc$control)
+
+
+barplot(table1,
+main = "Control of the Institution and Cost",
+xlab = "Control of the Institution",
+ylab = "Cost",
+names.arg = c("Public", "Non-Profit Private", "Non-Profit Public"),
+col = "darkgreen",
+horiz = FALSE)
+
+sc%>%filter(debt_mdn,control)
+
+table2 <- table(sc$debt_mdn,sc$control)
+
+
+barplot(table2,
+main = "Control of the Institution and Cost",
+xlab = "Control of the Institution",
+ylab = "Debt",
+names.arg = c("Public", "Non-Profit Private", "Non-Profit Public"),
+col = "darkred",
+horiz = FALSE)
+```
+
+
+I chose to use vertical bar plots to plot each of the prompts. I created two tables to isolate the relevant variables from the rest of the dataset and then ran the code. Each plot shows that private non-profit institutions have higher costs and its students have higher debt. 
+
+That being said, I was reviewing this assignment with a colleague, and she mentioned she interpreted the above as three different plots showing cost/debt by institution, so I will also plot those (I am keeping my bar plots because I struggled to learn how to do them and want to keep it as notes for future reference):
+
+```{r}
+Public <-sc%>%filter(control==1)%>%
+  select(instnm,debt_mdn,costt4_a)%>%
+  arrange(-debt_mdn)
+
+library(plotly)
+library(Metrics)
+library(tidyverse)
+
+
+gg<-ggplot(data=Public, aes(y=debt_mdn,x=costt4_a,text=instnm))
+gg<-gg+geom_point(alpha=.5,size=.5)
+gg<-gg+geom_point(aes(y=debt_mdn,x=costt4_a,
+                  color="Institution"),
+                  size=.5)
+gg<-gg+xlab("Cost")+ylab("Median Debt")
+gg<-gg+ggtitle("Debt and Cost in Public Institutions of Higher Learning")
+
+gg
+gg5 <-gg
+
+PrivateNP <-sc%>%filter(control==2)%>%
+  select(instnm,debt_mdn,costt4_a)%>%
+  arrange(-debt_mdn)
+
+library(plotly)
+library(Metrics)
+library(tidyverse)
+
+
+gg<-ggplot(data=PrivateNP, aes(y=debt_mdn,x=costt4_a,text=instnm))
+gg<-gg+geom_point(alpha=.5,size=.5)
+gg<-gg+geom_point(aes(y=debt_mdn,x=costt4_a,
+                  color="Institution"),
+                  size=.5)
+gg<-gg+xlab("Cost")+ylab("Median Debt")
+gg<-gg+ggtitle("Debt and Cost in Private Non-Profit Institutions of Higher Learning")
+
+gg
+gg6 <-gg
+
+PrivateFP <-sc%>%filter(control==3)%>%
+  select(instnm,debt_mdn,costt4_a)%>%
+  arrange(-debt_mdn)
+
+library(plotly)
+library(Metrics)
+library(tidyverse)
+
+
+gg<-ggplot(data=PrivateFP, aes(y=debt_mdn,x=costt4_a,text=instnm))
+gg<-gg+geom_point(alpha=.5,size=.5)
+gg<-gg+geom_point(aes(y=debt_mdn,x=costt4_a,
+                  color="Institution"),
+                  size=.5)
+gg<-gg+xlab("Cost")+ylab("Median Debt")
+gg<-gg+ggtitle("Debt and Cost in Private For-Profit Institutions of Higher Learning")
+
+gg
+gg6 <-gg
+```
+
+I am glad that I redid my plots. I chose to filter by control of the institution and selected on institution name, debt, and cost. I then renamed these objects and ran the gg plots on each of them.
+
+The plot "Debt and Cost in Public Institutions of Higher Learning" indicates that as cost goes up, so too does median debt. The plot "Debt and Cost in Private Non-Profit Institutions of Higher Learning" aligns with what was found in the Q3 scatterplot. Debt and cost appear to be positively correlated until we get to those with the highest cost, in which case there is data showing low debt with high cost. There is not much data captured within "Debt and Cost in Private For-Profit Institutions of Higher Learning," and I do not think we can interpret it. 
