@@ -1,0 +1,165 @@
+---
+title: "02-assignment_Parzych"
+author: "Christen Parzych"
+date: "8/30/2019"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+```
+
+I used the same county-level dataset that was used during week 2's async (pd). First, I want to load all of packages and the dataset itself, as well as the explanatory variable notes:
+
+
+```{r include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(echo = TRUE)
+library(plotly)
+library(Metrics)
+library(tidyverse)
+library(Rcmdr)
+
+```
+
+```{r}
+load("pd.Rdata")
+load("pd_lab_explain.Rdata")
+```
+
+##Question 1: Calculate the mean of the outcome.
+
+This assignment focuses on predicting homeownership rates, so I selected 'homeownership' as the variable. To practice some of the code we used in the async, I first filtered the 'pd' dataset by homeownership rates and arranged them in descending order. To calculate the unconditional mean of the dependent variable, I utilized the same code we used in the Week 2 async:
+
+```{r, include=FALSE}
+pd
+pd%>%
+  select(county,homeown_rate)%>%
+  arrange(-homeown_rate)
+```
+```{r}
+pd%>%summarize(mean_homeown_rate=mean(homeown_rate,na.rm=TRUE))
+```
+
+The unconditional mean of homeownership rates in the pd dataset is 72.74%.
+
+##Question 2: Use your mean as a predictor: create a new variable that consists of the mean of the outcome. 
+
+I chose to use the 'mutate' command to add the unconditional mean for homeownership rate to the 'pd' dataset. Because the mean is unconditional, we assume we know nothing else about the dataset:
+
+```{r}
+pd<-pd%>%mutate(mean_homeown_rate=mean(homeown_rate,na.rm=TRUE))
+view(pd)
+```
+This now has added a variable called 'mean_homeown_rate to the pd dataset, representing the unconditional mean of homeownership rates across all counties. I verified the variable was added by using 'view(pd).' The average calculated in Question 1 is listed for all counties. 
+
+##Question 3: Calculate a summary measure of the errors for each observation--the difference between your prediction and the outcome.
+
+Assuming that our unconditional average is in the absence of further information, we expect our RMSE to be rather high (the lower the better). RMSE, or root mean squared error, represents the difference between a prediction and its outcome, i.e., the actual value of homeownership rates minus the predicted/mean value of homeownership rates. The error term for this prediction is stored in 'e1,' established in the first line of code in the chunk below. I utilized the RMSE command from the async:
+
+```{r}
+
+pd<-pd%>%mutate(e1=homeown_rate-mean_homeown_rate)
+
+rmse_uncond_mean<-rmse(pd$homeown_rate,pd$mean_homeown_rate)
+
+rmse_uncond_mean
+
+
+```
+
+On average our unconditional mean is off by 7.65%.
+
+##Question 4: Calculate the mean of the outcome at levels of a predictor variable.
+
+For this question I will add another level/variable in the hopes of reducing my RMSE. I am selecting median household income, or median_hh_inc. I chose this variable because I hypothesize that homeownership rates are correlated with median household income. Next, I will calculate the average at each quartile of median household income. 
+
+I will create a new variable for quartiles of median household income:
+
+```{r condtl_mean_single}
+pd<-pd%>%mutate(median_hh_inc_level=ntile(median_hh_inc,4))
+
+pd%>%select(county,median_hh_inc,median_hh_inc_level)%>%View()
+
+table(pd$median_hh_inc_level)
+
+summary(pd$median_hh_inc)
+```
+
+I divided the dataset into four equal groups, each containing 772 members, from the lowest median household income levels to the highest. I then could ask for a summary of this new variable median_hh_inc_level:
+
+The first quartile goes from $0 to $38,066; the second from $38,067 to $43,809; the third from $43,810 to $50,635; and the fourth from $50,636 to $122,068. 
+
+I will now use these groups to calculate the mean of the outcome at each level of the predictor, or the average homeownership rate at each level of household income. 
+```{r}
+pd<-pd%>%group_by(median_hh_inc_level)%>% ## Group by predictor
+  ##Calculate mean at each level of predictor
+  mutate(pred_homeown_rate_hh_inc=mean(homeown_rate))%>%
+  ## Ungroup
+  ungroup()%>% 
+  #Rank by prediction, with ties sorted randomly
+  mutate(pred_homeown_rate_hh_inc_rank=rank(pred_homeown_rate_hh_inc,ties.method="random"))
+
+
+pd%>%select(county,median_hh_inc,median_hh_inc_level,pred_homeown_rate_hh_inc)%>%View()
+```
+
+```{r}
+pd%>%
+  select(county,median_hh_inc_level,pred_homeown_rate_hh_inc)%>%
+  arrange(-pred_homeown_rate_hh_inc)
+```
+
+The mean of the outcome of the predictor at each level are as follows:
+Level 1: 71.93%; Level 2: 72.78%; Level 3: 72.92%; Level 4: 73.31%.
+
+##Question 5: Use these conditional means as a prediction: for every county, use the conditional mean to provide a "best guess" as to that county's level of the outcome. 
+
+To refine the model further, I will predict homeownership rates based on household income levels AND median home value (med_home_val). I chose median home values with the recognition that higher household income levels don't necessarily translate to higher rates of homeownership levels--it depends on the price of homes in the area. First, I again create a new variable, this time for median home value divided into four different groups or quartiles. As before, there are 772 members in each of my four sections. 
+
+```{r}
+pd<-pd%>%mutate(med_home_val_level=ntile(median_home_val,4))
+
+table(pd$med_home_val_level)
+```
+I now want to predict homeownership rates based both on median household income levels AND median home value. Like in the async, I want to first check if home values are associated with homeownership rates. The following code will give us the average homeownership rate at each level of median home values: 
+
+```{r}
+
+pd%>%group_by(med_home_val_level)%>% 
+   summarise(pred_homeown_rate_med_home=mean(homeown_rate))
+
+```
+It looks like it might help us slightly: as home value level goes up, predicted homeownership rates go down. 
+
+```{r}
+pd<-pd%>%group_by(median_hh_inc_level,med_home_val_level)%>% 
+  mutate(pred_homeown_rate_hh_inc_and_home_val=mean(homeown_rate))%>%
+  ## Ungroup
+  ungroup()%>% 
+  #Rank by prediction, with ties sorted randomly
+  mutate(pred_homeown_rate_hh_inc_and_home_val_rank=rank(pred_homeown_rate_hh_inc_and_home_val,ties.method="random"))
+
+pd%>%
+  select(county,median_hh_inc_level,med_home_val_level,pred_homeown_rate_hh_inc_and_home_val)%>%
+  arrange(-pred_homeown_rate_hh_inc_and_home_val)
+```
+
+##Question 6: Calculate a summary measure of the error in your predictions. 
+
+I used my conditional mean with my RMSE. Unfortunately, it appears that adding household income as a single predictor variable increased the RMSE to 7.64%. Perhaps household income levels are not a good predictor of homeownership rates. 
+
+```{r}
+rmse_cond_mean_one<-rmse(pd$homeown_rate,pd$pred_homeown_rate_hh_inc)
+rmse_cond_mean_one
+```
+
+Running RMSE again with two predictor variables, the RMSE reduces to 7.40%, slightly bettering our model. Please note that while I used the rmse_cond_mean_one command, I utilized my original variable (homeown_rate) with my new, combined conditional variable (pred_homeown_rate_hh_inc_and_home_val).
+
+```{r}
+rmse_cond_mean_one<-rmse(pd$homeown_rate,pd$pred_homeown_rate_hh_inc_and_home_val)
+rmse_cond_mean_one
+```

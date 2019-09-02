@@ -1,0 +1,126 @@
+---
+title: "Problem Set 3"
+author: "Christen Parzych"
+date: "9/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+library(tidyverse)
+library(forcats)
+library(RColorBrewer)
+library(knitr)
+```
+
+I used the same attrition dataset that was used during week 3's async (at). I set my working directory and then loaded all of packages and the dataset itself:
+
+```{r}
+load("attrition.Rdata")
+view(at)
+```
+
+##Question 1: Create a graph that shows the distribution of monthly income. 
+
+I chose to use a univariate histogram to display the distribution of monthly income. I chose the histogram in order to display the continuous variable (monthly income) across different ranges. I first pointed it to the correct dataset (at), defined the variable (MonthlyIncome), and plotted the histogram using ggplot. I set the bin width to 500 to determine the range on the x axis. This is a right-skewed distribution, with most employees making less than $5,000 a month.  
+
+```{r}
+gg<-ggplot(at,aes(x=MonthlyIncome))
+gg<-gg+geom_histogram(binwidth = 500,fill="lightblue")
+gg<-gg+xlab("Monthly Income")+ylab("Number of Employees")
+gg
+``` 
+
+##Question 2: Create a graph that shows the average level of monthly income by field of education. 
+
+I chose to utilize a bar chart for this question, to show the average level of income by field of education. The variables are 'MonthlyIncome' and 'EducationField.' Each bar represents a different field of education.
+
+First I made a prediction regarding average level of income by education field. I then created a new command called 'inc_avg,' which is equal to mean monthly income grouped by education field:
+
+```{r}
+
+at_sum<-at%>%
+  group_by(EducationField)%>%
+  summarize(inc_avg=mean(MonthlyIncome))
+
+
+at_sum
+
+```
+I am going to use the summary data above (at_sum) to plot this in a bar graph. I set the statistic to 'identity' so that it plots what is in the dataset. 
+
+```{r}
+## Plot it using a bar plot
+gg<-ggplot(at_sum,aes(x=fct_reorder(EducationField,inc_avg),y=inc_avg))
+gg<-gg+geom_bar(stat="identity",aes(fill=EducationField),position="dodge")
+gg1<-gg+ylab("Average Monthly Income")+xlab("Education Field")
+gg1
+```
+
+
+Individuals with degrees in human resources and marketing make the most in monthly income on average. 
+
+##Question 3: Create another graph that shows average level of monthly income by field of education and gender. 
+
+First I made a prediction regarding average level of income by education field and gender. I then created a new command called 'inc_avg,' which is equal to mean monthly income grouped by education field and gender.
+
+```{r}
+
+at_sum1<-at%>%
+  group_by(EducationField,Gender)%>%
+   summarize(inc_avg=mean(MonthlyIncome))%>%
+  arrange(-inc_avg)
+
+
+
+## Get the results
+at_sum1
+```
+
+I ran a similar bar plot but added an additional grouping variable (gender). I am going to use the summary data above (at_sum1) to plot this in a bar graph. I set the statistic to 'identity' so that it plots what is in the dataset. Gender is illustrated in the graph through the use of color. x (education field) and y (average monthly income) remain the same. 
+
+```{r}
+## Plot it using a bar plot
+gg<-ggplot(at_sum1,aes(x=fct_reorder(EducationField,inc_avg),y=inc_avg,color=Gender))
+gg<-gg+geom_bar(stat="identity",aes(fill=Gender),position="dodge")
+gg2<-gg+ylab("Average Monthly Income")+xlab("Education Field")
+gg2
+```
+
+Women with technical or human resources degrees collect more salary in a month than men with degrees in the same education field. 
+
+##Question 4: Create a graph that shows average levels of monthly income by field of education, gender, and job level. 
+
+First I made a prediction regarding average level of monthly income by education field, gender, and job level ranking. As noted in the problem set instructions, the highest ranked employees are rated '5.' I then created a new command called 'inc_avg,' which is equal to mean monthly income grouped by education field, gender, and job level rating. 
+
+```{r}
+
+at_sum2<-at%>%
+  group_by(EducationField,Gender,JobLevel)%>%
+  summarize(inc_avg=mean(MonthlyIncome))%>%
+  arrange(-inc_avg)
+
+at_sum2
+```
+
+This time I ran sub-bar-plots by using the facet option to display all of the variables being graphed. 
+I used the summary data above (at_sum2) to plot this in multiple bar graphs. I again set the statistic to 'identity' so that it plots what is in the dataset. I originally ran these bar graphs vertically, but I decided to flip them in order to read them a bit easier. Although these graphs display a lot of information, they do not make the most effective visual. 
+```{r}
+gg<-ggplot(at_sum2,aes(x=reorder(EducationField,inc_avg),
+                      y=inc_avg,
+                      fill=Gender))
+## Bar plot, with unstacked (dodge)
+ gg<-gg+geom_bar(stat="identity",position="dodge")
+## Separate out by Marital Status
+gg<-gg+facet_wrap(~JobLevel)
+
+gg<-gg+ylab("Average Annual Income")+xlab("Education Field")
+gg<-gg+theme(axis.text.x = element_text(angle = 60, hjust = 1))
+gg<-gg+coord_flip()
+gg3<-gg+ggtitle("Average Monthly Income by Gender, Education Field, and Job Level")
+## Print
+gg3
+```
+
+It appears that at the extremes of job levels (1 and 5), there is less disparity in annual incomes by gender; however, within the middle (especially for 3 and 4), there is some variation. 
