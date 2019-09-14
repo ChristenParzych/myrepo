@@ -1,0 +1,126 @@
+---
+title: "Data Set 4"
+author: "Christen Parzych"
+date: "9/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+As always, I first cleared the environment and loaded each of the required libraries: 
+
+```{r}
+
+rm(list=ls())
+
+library(tidyverse)
+
+
+library(haven)
+
+
+library(readxl)
+
+library(readr)
+```
+
+##1. Panel data for OECD countries. Save as file name 'oecd.Rdata.'
+
+
+This is a delimited dataset, and I used the 'read.delim' function to load it. I named it to the environment as 'oecd.' It has 342 observations of 6 variables. I used the 'head' command to verify that it loaded cleanly, and saved it as 'oecd.Rdata.'
+
+```{r}
+oecd<-read.delim(file="http://www.wiley.com/legacy/wileychi/baltagi/supp/Gasoline.dat",header=TRUE,dec = " ")
+
+read_delim(file="http://www.wiley.com/legacy/wileychi/baltagi/supp/Gasoline.dat",delim = " ")
+
+head(oecd)
+
+save(oecd,file="oecd.Rdata")
+
+```
+
+##2. U.S. National Election Survey data from 2004. Save as file name nes.RData.
+http://www.uta.edu/faculty/story/DataSets.htm
+
+We know that this data is in SPSS format because it is a '.sav' file. As a result, I will use the 'haven' command, or 'read_spss.' Once again we use the 'head' command to verify that all the data was read in correctly. There are 1,212 observations of 242 variables. 
+
+Finally, I saved it as an R file. 
+
+```{r}
+nes<-read_spss("http://www.uta.edu/faculty/story/DataSets/NES2004.sav")
+
+head(nes)
+
+save(nes,file = "nes.Rdata")
+
+```
+
+
+##3. General social survey, student version. Save as file name gss.Rdata.
+http://www.uta.edu/faculty/story/DataSets.htm
+
+This is an Excel file, so I will use the 'read_Excel' function to bring the data in to the environment. I've named the dataset 'gss.' We need to use a true/false structure to tell R whether certain conditions are met. In this case, we want R to include the column names, so I can set the condition as 'true.'  
+
+I then saved the file as requested. The dataset has 995 observations of 44 variables. 
+
+```{r}
+gss<-read_excel("GeneralSocialSurvey1996ExcelDataStudentVersion.xls",skip=0, col_names = TRUE)
+
+head(gss)
+
+save(gss,file = "gss.Rdata")
+```
+
+##4. Replication file for "STATISTICAL DISCRIMINATION OR PREJUDICE? A LARGE SAMPLE FIELD EXPERIMENT." Open up and save the mainData.csv file. Save it as maindata.Rdata. 
+
+This is a comma-separated variable file, which is a data file delimited by commas.The file is found at the following address:
+
+https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/26410&studyListingIndex=1_f1a615c2cbee97fb79c9d575ae73 
+
+I downloaded the 'mainData.csv' file and saved it to my working directory (/~Box Sync/School/DataScience/myrepo1). I then used the 'read_csv' function to load the file into R, naming it 'main.'
+
+I then verified that the file loaded cleanly by using the 'head' function and saved the file using 'write_csv.' This dataset contain 14,237 observations of 41 variables. The column names appear clear and descriptive, so I did not rename them. 
+
+```{r}
+main<-read_csv(file="mainData.csv")
+
+head(main)
+
+write_csv(main,path="maindata.Rdata")
+
+```
+
+##5. The Lalonde dataset, covering work experiences in the Panel Study of Income Dynamics (psid). Save as psid.RData http://users.nber.org/~rdehejia/data/psid_controls.txt 
+
+This is a delimited dataset, and I used the 'read.delim' function to load it. I named it to the environment as 'psid.' It has 2,490 observations of 21 variables, though many  of the columns are NA, so I will need to clean that up. I will also add labels to each variable/column. 
+
+Once I have eliminated the blank columns (and renamed the dataset 'psid2'), I am left with 2,490 observations of ten variables.
+
+The instructions point us to the data labels on the website. They are as follows (left to right): treatment indicator (1 if treated, 0 if not treated), age, education, Black (1 if black, 0 otherwise), Hispanic (1 if Hispanic, 0 otherwise), married (1 if married, 0 otherwise), nodegree (1 if no degree, 0 otherwise), RE75 (earnings in 1975), and RE78 (earnings in 1978). The last variable is the outcome; other variables are pre-treatment.
+I then saved it as 'psid.Rdata.'
+
+```{r}
+psid<-read.delim(file="http://users.nber.org/~rdehejia/data/psid_controls.txt",header=FALSE,sep = " ")
+
+head(psid)
+
+psid2<-psid[ ,-(c(1,2,4,6,8,10,12,14,16,18,20))]
+
+names(psid2)<-c("treatment_indicator",
+                "age",
+                "education",
+                "black",
+                "hispanic",
+                "married",
+                "nodegree",
+                "RE75",
+                "RE78",
+                "outcome")
+
+head(psid2)
+
+save(psid2,file = "psid.Rdata")
+```
